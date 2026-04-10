@@ -6,7 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   Modal,
-  StyleSheet
+  StyleSheet,
+  Image
 } from 'react-native';
 
 export default function HomeScreen({ navigation, pieces, setPieces }) {
@@ -44,6 +45,15 @@ export default function HomeScreen({ navigation, pieces, setPieces }) {
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => openModal(item)}>
             <View style={styles.card}>
+
+              {/* 🔥 IMAGEN EN CARD */}
+              {item.image && (
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.imageCard}
+                />
+              )}
+
               <Text>Pieza: {item.pieza}</Text>
               <Text>Fecha: {item.fecha}</Text>
 
@@ -59,6 +69,15 @@ export default function HomeScreen({ navigation, pieces, setPieces }) {
       <Modal visible={modalVisible} transparent={true}>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
+
+            {/* 🔥 IMAGEN EN MODAL */}
+            {selectedPiece?.image && (
+              <Image
+                source={{ uri: selectedPiece.image }}
+                style={styles.imageModal}
+              />
+            )}
+
             <Text>Pieza: {selectedPiece?.pieza}</Text>
             <Text>Marca: {selectedPiece?.marca}</Text>
             <Text>No Serie: {selectedPiece?.serie}</Text>
@@ -76,15 +95,36 @@ export default function HomeScreen({ navigation, pieces, setPieces }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, marginTop: 40 },
-  card: { padding: 10, borderWidth: 1, marginTop: 10 },
+
+  card: {
+    padding: 10,
+    borderWidth: 1,
+    marginTop: 10,
+    alignItems: 'center'
+  },
+
+  imageCard: {
+    width: 80,
+    height: 80,
+    marginBottom: 10
+  },
+
   modal: {
     flex: 1,
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)'
   },
+
   modalContent: {
     backgroundColor: 'white',
     margin: 20,
-    padding: 20
+    padding: 20,
+    alignItems: 'center'
+  },
+
+  imageModal: {
+    width: 150,
+    height: 150,
+    marginBottom: 10
   }
 });
