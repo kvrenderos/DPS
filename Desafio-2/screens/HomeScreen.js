@@ -7,15 +7,31 @@ import {
   TouchableOpacity,
   Modal,
   StyleSheet,
-  Image
+  Image,
+  Alert,
+  TextInput
 } from 'react-native';
 
 export default function HomeScreen({ navigation, pieces, setPieces }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPiece, setSelectedPiece] = useState(null);
+  const [search, setSearch] = useState('');
 
   const deletePiece = (id) => {
-    setPieces(pieces.filter(item => item.id !== id));
+    Alert.alert(
+      "Eliminar pieza",
+      "¿Seguro que deseas eliminar?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => {
+            setPieces(pieces.filter(item => item.id !== id));
+          }
+        }
+      ]
+    );
   };
 
   const openModal = (item) => {
@@ -23,30 +39,45 @@ export default function HomeScreen({ navigation, pieces, setPieces }) {
     setModalVisible(true);
   };
 
-  const sortedPieces = [...pieces].sort(
-    (a, b) => new Date(b.fecha) - new Date(a.fecha)
-  );
+  // 🔥 FILTRO SEGURO + ORDEN
+  const filteredPieces = pieces
+    .filter(item =>
+      (item.pieza || '').toLowerCase().includes(search.toLowerCase()) ||
+      (item.vehiculo || '').toLowerCase().includes(search.toLowerCase()) ||
+      (item.marca || '').toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
   return (
     <View style={styles.container}>
 
       <Button
         title="Agregar Pieza"
-        onPress={() => navigation.navigate("AddPiece")}
+        onPress={() => navigation.navigate("Registrar Pieza")}
       />
 
-      {pieces.length === 0 && (
-        <Text>No hay piezas, agregue una</Text>
-      )}
+      <TextInput
+        placeholder="Buscar por pieza, marca o placa..."
+        style={styles.input}
+        value={search}
+        onChangeText={setSearch}
+      />
 
       <FlatList
-        data={sortedPieces}
+        data={filteredPieces}
         keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <Text style={{ marginTop: 20 }}>
+            No hay piezas registradas
+          </Text>
+        }
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => openModal(item)}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => openModal(item)}
+          >
             <View style={styles.card}>
 
-              {/* 🔥 IMAGEN EN CARD */}
               {item.image && (
                 <Image
                   source={{ uri: item.image }}
@@ -54,23 +85,26 @@ export default function HomeScreen({ navigation, pieces, setPieces }) {
                 />
               )}
 
-              <Text>Pieza: {item.pieza}</Text>
+              <Text style={styles.title}>{item.pieza}</Text>
               <Text>Fecha: {item.fecha}</Text>
+              <Text>Vehículo: {item.vehiculo || "N/A"}</Text>
 
               <Button
                 title="Eliminar"
-                onPress={() => deletePiece(item.id)}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  deletePiece(item.id);
+                }}
               />
             </View>
           </TouchableOpacity>
         )}
       />
 
-      <Modal visible={modalVisible} transparent={true}>
+      <Modal visible={modalVisible} transparent>
         <View style={styles.modal}>
           <View style={styles.modalContent}>
 
-            {/* 🔥 IMAGEN EN MODAL */}
             {selectedPiece?.image && (
               <Image
                 source={{ uri: selectedPiece.image }}
@@ -78,13 +112,17 @@ export default function HomeScreen({ navigation, pieces, setPieces }) {
               />
             )}
 
-            <Text>Pieza: {selectedPiece?.pieza}</Text>
+            <Text style={styles.title}>{selectedPiece?.pieza}</Text>
             <Text>Marca: {selectedPiece?.marca}</Text>
-            <Text>No Serie: {selectedPiece?.serie}</Text>
+            <Text>Serie: {selectedPiece?.serie}</Text>
             <Text>Precio: {selectedPiece?.precio}</Text>
             <Text>Fecha: {selectedPiece?.fecha}</Text>
+            <Text>Vehículo: {selectedPiece?.vehiculo}</Text>
 
-            <Button title="Cerrar" onPress={() => setModalVisible(false)} />
+            <Button
+              title="Cerrar"
+              onPress={() => setModalVisible(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -94,18 +132,42 @@ export default function HomeScreen({ navigation, pieces, setPieces }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, marginTop: 40 },
+  container: {
+    flex: 1,
+    padding: 20,
+    marginTop: 40,
+    backgroundColor: '#F3F4F6'
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 8,
+    backgroundColor: '#fff'
+  },
 
   card: {
-    padding: 10,
-    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    borderRadius: 12,
     marginTop: 10,
-    alignItems: 'center'
+    elevation: 3,
+    borderLeftWidth: 5,
+    borderLeftColor: '#1E3A8A'
+  },
+
+  title: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#1E3A8A'
   },
 
   imageCard: {
-    width: 80,
-    height: 80,
+    width: 100,
+    height: 100,
+    borderRadius: 10,
     marginBottom: 10
   },
 
@@ -119,6 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     margin: 20,
     padding: 20,
+    borderRadius: 15,
     alignItems: 'center'
   },
 

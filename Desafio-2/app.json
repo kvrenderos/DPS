@@ -20,13 +20,20 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.kvrenderosr.Desafio2"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a7553e79-3a74-4a1f-a427-28229662cba5"
+      }
+    },
+    "owner": "kvrenderosr"
   }
 }

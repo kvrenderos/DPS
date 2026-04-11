@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   Text,
+  Modal,
   Image
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -17,22 +18,29 @@ export default function AddPieceScreen({ navigation, pieces, setPieces }) {
   const [serie, setSerie] = useState('');
   const [precio, setPrecio] = useState('');
   const [fecha, setFecha] = useState('');
+
   const [image, setImage] = useState(null);
 
-  const [errors, setErrors] = useState({});
+  const [piecesList, setPiecesList] = useState([]);
+  const [modalPiece, setModalPiece] = useState(false);
+  const [newPieceName, setNewPieceName] = useState('');
 
-  // 📷 SELECCIONAR IMAGEN
+  const [vehicles, setVehicles] = useState([]);
+  const [modalVehicle, setModalVehicle] = useState(false);
+  const [placa, setPlaca] = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState('');
+
+  // 📸 Seleccionar imagen
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permissionResult.granted) {
-      Alert.alert("Permiso requerido", "Necesitas permitir acceso a la galería");
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permiso requerido", "Activa permisos para acceder a imágenes");
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      quality: 1
     });
 
     if (!result.canceled) {
@@ -40,52 +48,31 @@ export default function AddPieceScreen({ navigation, pieces, setPieces }) {
     }
   };
 
-  // VALIDACIONES
-  const validate = () => {
-    let newErrors = {};
+  // 💾 Guardar con validaciones PRO
+  const handleSave = () => {
 
     if (!pieza.trim()) {
-      newErrors.pieza = "La pieza es requerida";
-    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(pieza)) {
-      newErrors.pieza = "Solo letras";
+      Alert.alert("Error", "La pieza es obligatoria");
+      return;
     }
 
-    if (!marca.trim()) newErrors.marca = "Requerido";
+    if (!marca.trim()) {
+      Alert.alert("Error", "La marca es obligatoria");
+      return;
+    }
 
     if (!serie.trim()) {
-      newErrors.serie = "Requerido";
-    } else if (serie.length < 5) {
-      newErrors.serie = "Mínimo 5 caracteres";
+      Alert.alert("Error", "El número de serie es obligatorio");
+      return;
     }
 
-    if (!precio) {
-      newErrors.precio = "Requerido";
-    } else if (isNaN(precio)) {
-      newErrors.precio = "Debe ser número";
-    } else if (Number(precio) <= 0) {
-      newErrors.precio = "Mayor a 0";
+    if (!precio || isNaN(precio)) {
+      Alert.alert("Error", "Precio inválido");
+      return;
     }
 
-    // VALIDACIÓN DE FECHA
-    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-
-    if (!fecha) {
-      newErrors.fecha = "La fecha es requerida";
-    } else if (!fechaRegex.test(fecha)) {
-      newErrors.fecha = "Formato: YYYY-MM-DD";
-    }
-
-    if (!image) {
-      newErrors.image = "Debes seleccionar una imagen";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSave = () => {
-    if (!validate()) {
-      Alert.alert("Error", "Corrige los campos");
+    if (!fecha.trim()) {
+      Alert.alert("Error", "La fecha es obligatoria");
       return;
     }
 
@@ -96,6 +83,7 @@ export default function AddPieceScreen({ navigation, pieces, setPieces }) {
       serie,
       precio,
       fecha,
+      vehiculo: selectedVehicle || "Sin vehículo",
       image
     };
 
@@ -106,61 +94,157 @@ export default function AddPieceScreen({ navigation, pieces, setPieces }) {
   return (
     <View style={styles.container}>
 
-      <TextInput placeholder="Pieza" style={styles.input} onChangeText={setPieza} />
-      {errors.pieza && <Text style={styles.error}>{errors.pieza}</Text>}
+      {/* 🔥 INPUT MANUAL DE PIEZA */}
+      <TextInput
+        placeholder="Nombre de la pieza"
+        style={styles.input}
+        value={pieza}
+        onChangeText={setPieza}
+      />
 
-      <TextInput placeholder="Marca" style={styles.input} onChangeText={setMarca} />
-      {errors.marca && <Text style={styles.error}>{errors.marca}</Text>}
+      <Text>Seleccionar pieza:</Text>
+      {piecesList.map((p, i) => (
+        <Button key={i} title={p} onPress={() => setPieza(p)} />
+      ))}
 
-      <TextInput placeholder="No Serie" style={styles.input} onChangeText={setSerie} />
-      {errors.serie && <Text style={styles.error}>{errors.serie}</Text>}
+      <Button title="Agregar nueva pieza" onPress={() => setModalPiece(true)} />
+
+      {/* 🔥 FEEDBACK */}
+      <Text>Pieza seleccionada: {pieza}</Text>
+
+      <TextInput
+        placeholder="Marca"
+        style={styles.input}
+        value={marca}
+        onChangeText={setMarca}
+      />
+
+      <TextInput
+        placeholder="Serie"
+        style={styles.input}
+        value={serie}
+        onChangeText={setSerie}
+      />
 
       <TextInput
         placeholder="Precio"
         style={styles.input}
-        keyboardType="numeric"
+        value={precio}
         onChangeText={setPrecio}
+        keyboardType="numeric"
       />
-      {errors.precio && <Text style={styles.error}>{errors.precio}</Text>}
 
       <TextInput
         placeholder="Fecha (YYYY-MM-DD)"
         style={styles.input}
+        value={fecha}
         onChangeText={setFecha}
       />
-      {errors.fecha && <Text style={styles.error}>{errors.fecha}</Text>}
+
+      <Text>Vehículo:</Text>
+      {vehicles.map((v, i) => (
+        <Button key={i} title={v} onPress={() => setSelectedVehicle(v)} />
+      ))}
+
+      <Button title="Agregar vehículo" onPress={() => setModalVehicle(true)} />
+
+      {/* 🔥 FEEDBACK VEHÍCULO */}
+      <Text>Vehículo seleccionado: {selectedVehicle || "Ninguno"}</Text>
 
       <Button title="Seleccionar Imagen" onPress={pickImage} />
-      {errors.image && <Text style={styles.error}>{errors.image}</Text>}
 
       {image && (
         <Image
           source={{ uri: image }}
-          style={{ width: 120, height: 120, marginTop: 10 }}
+          style={{ width: 100, height: 100, marginTop: 10 }}
         />
       )}
 
-      <View style={{ marginTop: 10 }}>
-        <Button title="Guardar" onPress={handleSave} />
-      </View>
+      <Button title="Guardar" onPress={handleSave} />
 
-      <View style={{ marginTop: 10 }}>
-        <Button title="Cancelar" onPress={() => navigation.goBack()} />
-      </View>
+      {/* 🔧 MODAL PIEZA */}
+      <Modal visible={modalPiece} transparent>
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="Nueva pieza"
+              style={styles.input}
+              value={newPieceName}
+              onChangeText={setNewPieceName}
+            />
+
+            <Button
+              title="Guardar"
+              onPress={() => {
+                if (!newPieceName.trim()) return;
+                setPiecesList([...piecesList, newPieceName]);
+                setNewPieceName('');
+                setModalPiece(false);
+              }}
+            />
+
+            <Button title="Cancelar" onPress={() => setModalPiece(false)} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* 🔧 MODAL VEHÍCULO */}
+      <Modal visible={modalVehicle} transparent>
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="Placa"
+              style={styles.input}
+              value={placa}
+              onChangeText={setPlaca}
+            />
+
+            <Button
+              title="Guardar"
+              onPress={() => {
+                if (!placa.trim()) return;
+                setVehicles([...vehicles, placa]);
+                setPlaca('');
+                setModalVehicle(false);
+              }}
+            />
+
+            <Button title="Cancelar" onPress={() => setModalVehicle(false)} />
+          </View>
+        </View>
+      </Modal>
 
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, marginTop: 40 },
+  container: {
+    flex: 1,
+    padding: 20,
+    marginTop: 40,
+    backgroundColor: '#F3F4F6'
+  },
+
   input: {
     borderWidth: 1,
-    marginBottom: 5,
-    padding: 10
+    borderColor: '#D1D5DB',
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 8,
+    backgroundColor: '#fff'
   },
-  error: {
-    color: 'red',
-    marginBottom: 5
+
+  modal: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)'
+  },
+
+  modalContent: {
+    backgroundColor: 'white',
+    margin: 20,
+    padding: 20,
+    borderRadius: 10
   }
 });
